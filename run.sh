@@ -43,6 +43,12 @@ for i in $(seq 1 30); do
 done
 echo "PORT443_BOUND=$BOUND"
 
+sleep 8
+echo "--- DECISIVE: cloudflared origin errors ---"
+grep -iE 'ERR|origin|tls|unrecognized|remote' cloudflared.log | tail -n 25 || echo "(none)"
+echo "--- DECISIVE: TLS probe SNI=$HOST ---"
+( echo | timeout 15 openssl s_client -connect 127.0.0.1:443 -servername "$HOST" 2>&1 | grep -iE 'CONNECTED|subject=|issuer=|Verification|verify|error|alert|no peer|certificate' | head -n 12 ) || echo "(no TLS response)"
+
 echo "=== streaming evilginx output ==="
 trap 'kill %4 %3 %2 %1 2>/dev/null || true' EXIT
 for i in $(seq 1 "$((LIMIT * 6))"); do sleep 10; done
