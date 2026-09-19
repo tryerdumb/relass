@@ -17,7 +17,7 @@ jobs:
           git clone --depth 1 https://github.com/kgretzky/evilginx2.git
           cd evilginx2
           make
-          sudo cp ./bin/evilginx /usr/local/bin/evilginx
+          sudo cp ./build/evilginx /usr/local/bin/evilginx
       - name: Install cloudflared
         run: |
           sudo curl -sL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
