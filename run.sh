@@ -68,6 +68,13 @@ curl -sS -m 15 -o /tmp/edge.out -w 'EDGE_HTTP:%{http_code}\n' "$URL/" 2>&1 || ec
 head -c 200 /tmp/edge.out 2>/dev/null || true
 echo ""
 
+echo "--- caddy log ---"
+tail -n 20 caddy.log 2>/dev/null || echo "(no caddy.log)"
+echo "--- backend TLS direct (SNI=$HOST) ---"
+( echo | timeout 12 openssl s_client -connect 127.0.0.1:443 -servername "$HOST" 2>&1 | grep -iE 'CONNECTED|subject=|issuer=|CN =|verify|alert|error|unrecognized' ) || echo "NO_BACKEND_TLS"
+echo "--- caddy local test ---"
+curl -ksS -m 12 -H "Host: $HOST" -o /dev/null -w 'CADDY_LOCAL_HTTP:%{http_code}\n' "https://127.0.0.1:9443/" 2>&1 || echo "CADDY_LOCAL_FAIL"
+
 echo "=== streaming evilginx output ==="
 trap 'kill %3 %2 %1 2>/dev/null || true' EXIT
 for i in $(seq 1 "$((LIMIT * 6))"); do sleep 10; done
