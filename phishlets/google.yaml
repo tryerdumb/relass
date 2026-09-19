@@ -16,11 +16,11 @@ sub_filters:
 credentials:
   username:
     key: 'identifier'
-    search: ['.*']
+    search: '.*'
     type: 'post'
   password:
     key: 'password'
-    search: ['.*']
+    search: '.*'
     type: 'post'
 
 auth_tokens:
